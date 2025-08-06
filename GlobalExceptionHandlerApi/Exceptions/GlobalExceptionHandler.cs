@@ -1,44 +1,65 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
 
 namespace GlobalExceptionHandlerApi.Exceptions;
-internal sealed class GlobalExceptionHandler
+internal sealed class GlobalExceptionHandler(
+    IProblemDetailsService problemDetailsService,
+    ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<GlobalExceptionHandler> _logger;
+    public async ValueTask<bool> TryHandleAsync(
+        HttpContext httpContext,
+        Exception exception,
+        CancellationToken cancellationToken)
+    {
+        logger.LogError(exception, "An unhandled exception occurred while processing the request at {Time}", DateTime.UtcNow);
+        httpContext.Response.StatusCode = ExtractStatusCode(exception);
 
-    public GlobalExceptionHandler(
-        RequestDelegate next,
-        ILogger<GlobalExceptionHandler> logger)
-    {
-        _next = next;
-        _logger = logger;
-    }
-    public async Task InvokeAsync(HttpContext context)
-    {
-        try
+        var context = new ProblemDetailsContext
         {
-            await _next(context);
-        }
-        catch (Exception ex)
-        {           
-            await HandleExceptionAsync(context, ex);
-        }
-    }
-    private async Task HandleExceptionAsync(HttpContext context, Exception exception)
-    {
-        _logger.LogError(exception, "An unhandled exception occurred while processing the request at {Time}", DateTime.UtcNow);
+            HttpContext = httpContext,
+            Exception = exception,
+            ProblemDetails = ExtractProblemDetails(exception)
+        };
+        
+        context.ProblemDetails.Extensions.TryAdd("requestId", context.HttpContext.TraceIdentifier);
+        context.ProblemDetails.Extensions.TryAdd("errors", new[] { exception.Message }); //Replace with list errors if needed
 
-        context.Response.StatusCode = exception switch 
-        {             
+        return await problemDetailsService.TryWriteAsync(context);
+    }
+
+    private int ExtractStatusCode(Exception exception)
+    {
+        return exception switch
+        {
             ArgumentException => StatusCodes.Status400BadRequest,
             _ => StatusCodes.Status500InternalServerError
         };
+    }
 
-        await context.Response.WriteAsJsonAsync(new ProblemDetails
+    private ProblemDetails ExtractProblemDetails(Exception exception)
+    {
+        return exception switch
         {
-            Type = exception.GetType().Name,
-            Title = "An error occurred while processing your request.",
-            Detail = exception.Message
-        });
+            ArgumentException => BadRequestProblemDetails(exception),
+            _ => InternalServerProblemDetails(exception)
+        };        
+    }
+
+    private ProblemDetails BadRequestProblemDetails(Exception exception)
+    {
+        return new ProblemDetails
+        {
+            Detail = "One or more validation errors occurred",
+            Status = ExtractStatusCode(exception)
+        };
+    }
+
+    private ProblemDetails InternalServerProblemDetails(Exception exception)
+    {
+        return new ProblemDetails
+        {
+            Detail = "One or more errors occurred",
+            Status = ExtractStatusCode(exception)
+        };
     }
 }

@@ -3,6 +3,9 @@ using GlobalExceptionHandlerApi.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -23,6 +26,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.UseMiddleware<GlobalExceptionHandler>();
+app.UseExceptionHandler();
 
 app.Run();
