@@ -16,18 +16,64 @@ public class CustomerController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateCustomer([FromBody]Customer customer)
+    public async Task<IActionResult> CreateCustomer([FromBody] Customer customer)
     {
         _logger.LogInformation("Creating customer at {Time}", DateTime.UtcNow);
 
-        if (ModelState.IsValid is false)
+        if (!ModelState.IsValid)
         {
             _logger.LogWarning("Invalid model state for customer creation at {Time}", DateTime.UtcNow);
 
-            return BadRequest(ModelState);
+            var problemDetails = new ProblemDetails
+            {
+                Title = "Invalid model state",
+                Detail = "The request contains invalid data. Please check the provided information.",
+                Status = StatusCodes.Status400BadRequest,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+            };
+            return new ObjectResult(problemDetails) { StatusCode = StatusCodes.Status400BadRequest };
         }
 
-        ValidateRequest(customer);
+        if (customer.Id <= 0)
+        {
+            var problemDetails = new ProblemDetails
+            {
+                Title = "Invalid request",
+                Detail = "Invalid Id",
+                Status = StatusCodes.Status400BadRequest,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+                Extensions = {
+                    ["requestId"] = HttpContext.TraceIdentifier,
+                    ["errors"] = new[] { "Id must be greater than zero." }
+                }
+            };
+            return new ObjectResult(problemDetails) { StatusCode = StatusCodes.Status400BadRequest };
+        }
+
+        if (string.IsNullOrWhiteSpace(customer.Name))
+        {
+            var problemDetails = new ProblemDetails
+            {
+                Title = "Invalid request",
+                Detail = "Invalid Name",
+                Status = StatusCodes.Status400BadRequest,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+            };
+            return new ObjectResult(problemDetails) { StatusCode = StatusCodes.Status400BadRequest };
+        }
+
+        if (string.IsNullOrWhiteSpace(customer.Email))
+        {
+            var problemDetails = new ProblemDetails
+            {
+                Title = "Invalid request",
+                Detail = "Invalid Email",
+                Status = StatusCodes.Status400BadRequest,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+            };
+            return new ObjectResult(problemDetails) { StatusCode = StatusCodes.Status400BadRequest };
+        }
+
         await _customerServices.CreateCustomer(customer);
 
         return Created(string.Empty, customer);
