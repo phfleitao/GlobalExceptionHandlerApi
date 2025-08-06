@@ -1,4 +1,5 @@
 using GlobalExceptionHandlerApi.Domain;
+using GlobalExceptionHandlerApi.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,5 +22,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseMiddleware<GlobalExceptionHandler>();
 
 app.Run();
