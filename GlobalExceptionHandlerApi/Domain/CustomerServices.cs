@@ -1,13 +1,15 @@
 ﻿namespace GlobalExceptionHandlerApi.Domain;
 public class CustomerServices : ICustomerServices
 {
-    public IEnumerable<Customer> GetCustomers()
+    private static List<Customer> _customers = [];
+
+    public async Task CreateCustomer(Customer customer)
     {
-        return Enumerable.Range(1, 5)
-            .Select(index => new Customer(
-                index,
-                $"Customer {index}",
-                $"customer{index}@email.com")
-            ).ToArray();
+        await Task.Run(() => _customers.Add(customer));
+    }
+
+    public async Task<IEnumerable<Customer>> GetCustomers()
+    {
+        return await Task.Run(() => _customers.AsEnumerable());
     }
 }

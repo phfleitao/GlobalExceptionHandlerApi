@@ -1,5 +1,6 @@
 ﻿namespace GlobalExceptionHandlerApi.Domain;
 public interface ICustomerServices
 {
-    IEnumerable<Customer> GetCustomers();
+    Task CreateCustomer(Customer customer);
+    Task<IEnumerable<Customer>> GetCustomers();
 }
