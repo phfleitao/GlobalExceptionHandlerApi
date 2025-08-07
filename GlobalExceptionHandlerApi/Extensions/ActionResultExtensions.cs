@@ -33,7 +33,7 @@ public static class ActionResultExtensions
 
     private static string GetTitle(ErrorType errorType) =>
         errorType switch
-        {
+    {
             ErrorType.Validation => "Bad Request",
             ErrorType.NotFound => "Not Found",
             ErrorType.Conflict => "Conflict",
@@ -43,18 +43,22 @@ public static class ActionResultExtensions
     private static int GetStatusCode(ErrorType errorType) =>
         errorType switch
         {
+            ErrorType.Failure => StatusCodes.Status500InternalServerError,
             ErrorType.Validation => StatusCodes.Status400BadRequest,
             ErrorType.NotFound => StatusCodes.Status404NotFound,
             ErrorType.Conflict => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status500InternalServerError
         };
+    }
 
     private static string GetStatusCodeRFC(ErrorType errorType) => 
         errorType switch
         {
+            ErrorType.Failure => "https://datatracker.ietf.org/doc/html/rfc9110#section-15.6.1",
             ErrorType.Validation => "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.1",
             ErrorType.NotFound => "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.5",
             ErrorType.Conflict => "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.10",
             _ => "https://datatracker.ietf.org/doc/html/rfc9110#section-15.6.1"
         };
+    }
 }
