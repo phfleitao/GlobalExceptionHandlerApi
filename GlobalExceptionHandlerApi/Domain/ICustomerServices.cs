@@ -1,6 +1,8 @@
-﻿namespace GlobalExceptionHandlerApi.Domain;
+﻿using GlobalExceptionHandlerApi.SharedKernel.Results;
+
+namespace GlobalExceptionHandlerApi.Domain;
 public interface ICustomerServices
 {
-    Task CreateCustomer(Customer customer);
+    Task<Result> CreateCustomer(Customer customer);
     Task<IEnumerable<Customer>> GetCustomers();
 }
