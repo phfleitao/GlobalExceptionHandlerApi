@@ -33,7 +33,7 @@ public static class ActionResultExtensions
 
     private static string GetTitle(ErrorType errorType) =>
         errorType switch
-        {
+    {
             ErrorType.Validation => "Bad Request",
             ErrorType.NotFound => "Not Found",
             ErrorType.Conflict => "Conflict",
